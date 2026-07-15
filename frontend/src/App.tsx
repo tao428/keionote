@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Home } from './pages/Home';
 import { Syllabus } from './pages/Syllabus';
 import { ItemDetail } from './pages/ItemDetail';
 import { ItemCreate } from './pages/ItemCreate';
@@ -44,13 +45,18 @@ const AnimatedRoutes: React.FC<{
           path="/"
           element={
             <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/syllabus"
+          element={
+            <ProtectedRoute>
               <Syllabus />
             </ProtectedRoute>
           }
         />
-        {/* /syllabus は / に統合されたため、ルートに来たら / にリダイレクト */}
-        <Route path="/syllabus" element={<Navigate to="/" replace />} />
-        
         <Route
           path="/items/:id"
           element={
@@ -180,6 +186,12 @@ export const App: React.FC = () => {
                     to="/"
                     className="px-3.5 py-2 rounded-xl text-text-sub hover:text-keio-navy hover:bg-keio-navy/5 transition-all text-sm font-medium"
                   >
+                    ホーム
+                  </Link>
+                  <Link
+                    to="/syllabus"
+                    className="px-3.5 py-2 rounded-xl text-text-sub hover:text-keio-navy hover:bg-keio-navy/5 transition-all text-sm font-medium"
+                  >
                     シラバス検索
                   </Link>
                   <Link
@@ -204,6 +216,9 @@ export const App: React.FC = () => {
                 {/* モバイル用ナビゲーションリンク */}
                 <div className="md:hidden flex items-center gap-0.5">
                   <Link to="/" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
+                    <GraduationCap className="h-4.5 w-4.5" />
+                  </Link>
+                  <Link to="/syllabus" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
                     <BookOpen className="h-4.5 w-4.5" />
                   </Link>
                   <Link to="/timetable" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">

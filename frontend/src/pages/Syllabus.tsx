@@ -9,7 +9,7 @@ export const Syllabus: React.FC = () => {
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 検索サイドパネルの開閉状態 (初期状態は閉じた状態)
+  // 検索サイドパネルの開閉状態
   const [showFilters, setShowFilters] = useState(false);
 
   // 詳細検索条件の折りたたみ状態
@@ -19,21 +19,21 @@ export const Syllabus: React.FC = () => {
   const [expandedLectureId, setExpandedLectureId] = useState<string | null>(null);
 
   // 検索条件のState (クエリパラメータから同期)
-  const [year] = useState('2026');
+  const [year, setYear] = useState(searchParams.get('year') || '2026');
   const [semester, setSemester] = useState(searchParams.get('semester') || 'ALL');
   const [campus, setCampus] = useState(searchParams.get('campus') || 'ALL');
   const [faculty, setFaculty] = useState(searchParams.get('faculty') || 'ALL');
   const [department, setDepartment] = useState(searchParams.get('department') || '');
   const [grade, setGrade] = useState(searchParams.get('grade') || '');
-  const [weekday, setWeekday] = useState(searchParams.get('weekday') || '');
-  const [period, setPeriod] = useState(searchParams.get('period') || '');
   const [name, setName] = useState(searchParams.get('name') || '');
   const [teacher, setTeacher] = useState(searchParams.get('teacher') || '');
   const [keywords, setKeywords] = useState(searchParams.get('keywords') || '');
+  const [weekday, setWeekday] = useState(searchParams.get('weekday') || '');
+  const [period, setPeriod] = useState(searchParams.get('period') || '');
 
   // 詳細検索
   const [language, setLanguage] = useState(searchParams.get('language') || '');
-  const [classStyle, setClassStyle] = useState(searchParams.get('classStyle') || '');
+  const [field, setField] = useState(searchParams.get('field') || '');
   const [deliveryMethod, setDeliveryMethod] = useState(searchParams.get('deliveryMethod') || '');
   const [activeLearning, setActiveLearning] = useState(searchParams.get('activeLearning') || '');
 
@@ -47,13 +47,13 @@ export const Syllabus: React.FC = () => {
       if (faculty && faculty !== 'ALL') query.append('faculty', faculty);
       if (department) query.append('department', department);
       if (grade) query.append('grade', grade);
-      if (weekday) query.append('weekday', weekday);
-      if (period) query.append('period', period);
       if (name) query.append('name', name);
       if (teacher) query.append('teacher', teacher);
       if (keywords) query.append('keywords', keywords);
+      if (weekday) query.append('weekday', weekday);
+      if (period) query.append('period', period);
       if (language) query.append('language', language);
-      if (classStyle) query.append('classStyle', classStyle);
+      if (field) query.append('field', field);
       if (deliveryMethod) query.append('deliveryMethod', deliveryMethod);
       if (activeLearning) query.append('activeLearning', activeLearning);
 
@@ -85,38 +85,40 @@ export const Syllabus: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params: any = {};
+    if (year) params.year = year;
     if (semester !== 'ALL') params.semester = semester;
     if (campus !== 'ALL') params.campus = campus;
     if (faculty !== 'ALL') params.faculty = faculty;
     if (department) params.department = department;
     if (grade) params.grade = grade;
-    if (weekday) params.weekday = weekday;
-    if (period) params.period = period;
     if (name) params.name = name;
     if (teacher) params.teacher = teacher;
     if (keywords) params.keywords = keywords;
+    if (weekday) params.weekday = weekday;
+    if (period) params.period = period;
     if (language) params.language = language;
-    if (classStyle) params.classStyle = classStyle;
+    if (field) params.field = field;
     if (deliveryMethod) params.deliveryMethod = deliveryMethod;
     if (activeLearning) params.activeLearning = activeLearning;
 
     setSearchParams(params);
-    setShowFilters(false); // 検索実行時にモバイルドロワーなどを自動で閉じる
+    setShowFilters(false);
   };
 
   const resetFilters = () => {
+    setYear('2026');
     setSemester('ALL');
     setCampus('ALL');
     setFaculty('ALL');
     setDepartment('');
     setGrade('');
-    setWeekday('');
-    setPeriod('');
     setName('');
     setTeacher('');
     setKeywords('');
+    setWeekday('');
+    setPeriod('');
     setLanguage('');
-    setClassStyle('');
+    setField('');
     setDeliveryMethod('');
     setActiveLearning('');
     setSearchParams({});
@@ -133,7 +135,7 @@ export const Syllabus: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* 上部ヘッダー行 (タイトル + フィルター開閉トグル) */}
+      {/* 上部ヘッダー */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-main pb-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-keio-navy flex items-center gap-2">
@@ -141,7 +143,7 @@ export const Syllabus: React.FC = () => {
             シラバス講義検索
           </h2>
           <p className="text-[11px] text-text-sub mt-0.5">
-            慶應の開講シラバスから授業を選択し、指定の教科書や出品中のフリマ本を即座に探せます。
+            大学シラバスから開講科目を探し、使用されている指定教科書とフリマ出品情報を確認できます。
           </p>
         </div>
 
@@ -159,11 +161,10 @@ export const Syllabus: React.FC = () => {
       </div>
 
       <div className="relative flex items-start gap-8 min-h-[60vh]">
-        {/* スライドイン検索条件パネル (デスクトップ時は横レイアウト、モバイル時はオーバーレイドロワー) */}
+        {/* サイドパネルフィルター */}
         <AnimatePresence>
           {showFilters && (
             <>
-              {/* モバイル用背景オーバーレイマスク */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -172,7 +173,6 @@ export const Syllabus: React.FC = () => {
                 className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden"
               />
 
-              {/* 検索パネル本体 */}
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -204,52 +204,57 @@ export const Syllabus: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSearch} className="space-y-4 text-[11px] pb-10 lg:pb-0">
-                  {/* キーワード・授業名 */}
+                  {/* キーワード・科目名 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-text-sub mb-1.5">年度</label>
+                      <select
+                        className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
+                        value={year}
+                        onChange={(e) => setYear(e.target.value)}
+                      >
+                        <option value="2026">2026年度</option>
+                        <option value="2025">2025年度</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-bold text-text-sub mb-1.5">配当学年</label>
+                      <select
+                        className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
+                        value={grade}
+                        onChange={(e) => setGrade(e.target.value)}
+                      >
+                        <option value="">全て</option>
+                        {[1, 2, 3, 4, 5, 6].map(g => (
+                          <option key={g} value={g}>{g}年</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block font-bold text-text-sub mb-1.5">キーワード / 授業名</label>
+                    <label className="block font-bold text-text-sub mb-1.5">科目名</label>
                     <input
                       type="text"
-                      placeholder="授業名、教員名、キーワード..."
+                      placeholder="例: 微分積分学"
                       className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
-                      value={keywords}
-                      onChange={(e) => setKeywords(e.target.value)}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                     />
                   </div>
 
-                  {/* キャンパス & 学期 */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-bold text-text-sub mb-1.5">開講キャンパス</label>
-                      <select
-                        className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
-                        value={campus}
-                        onChange={(e) => setCampus(e.target.value)}
-                      >
-                        <option value="ALL">全て</option>
-                        <option value="HIYOSHI">日吉</option>
-                        <option value="MITA">三田</option>
-                        <option value="YAGAMI">矢上</option>
-                        <option value="SFC">SFC (湘南藤沢)</option>
-                        <option value="SHINANOMACHI">信濃町</option>
-                        <option value="SHIBA">芝共立</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block font-bold text-text-sub mb-1.5">学期</label>
-                      <select
-                        className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
-                        value={semester}
-                        onChange={(e) => setSemester(e.target.value)}
-                      >
-                        <option value="ALL">全学期</option>
-                        <option value="SPRING">春学期</option>
-                        <option value="AUTUMN">秋学期</option>
-                        <option value="FULL_YEAR">通年</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block font-bold text-text-sub mb-1.5">担当教員名</label>
+                    <input
+                      type="text"
+                      placeholder="例: 福澤 諭吉"
+                      className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
+                      value={teacher}
+                      onChange={(e) => setTeacher(e.target.value)}
+                    />
                   </div>
 
-                  {/* 学部・研究科 */}
+                  {/* 学部・研究科 & 学科 */}
                   <div>
                     <label className="block font-bold text-text-sub mb-1.5">対象学部</label>
                     <select
@@ -263,12 +268,50 @@ export const Syllabus: React.FC = () => {
                       <option value="商学部">商学部</option>
                       <option value="法学部">法学部</option>
                       <option value="文学部">文学部</option>
-                      <option value="医学部">医学部</option>
-                      <option value="薬学部">薬学部</option>
-                      <option value="看護医療学部">看護医療学部</option>
                       <option value="環境情報学部">環境情報学部</option>
                       <option value="総合政策学部">総合政策学部</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-text-sub mb-1.5">学科・専攻</label>
+                    <input
+                      type="text"
+                      placeholder="例: 情報工学科"
+                      className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                    />
+                  </div>
+
+                  {/* キャンパス & 学期 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-text-sub mb-1.5">キャンパス</label>
+                      <select
+                        className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
+                        value={campus}
+                        onChange={(e) => setCampus(e.target.value)}
+                      >
+                        <option value="ALL">全て</option>
+                        <option value="HIYOSHI">日吉</option>
+                        <option value="MITA">三田</option>
+                        <option value="YAGAMI">矢上</option>
+                        <option value="SFC">SFC</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-bold text-text-sub mb-1.5">学期</label>
+                      <select
+                        className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
+                        value={semester}
+                        onChange={(e) => setSemester(e.target.value)}
+                      >
+                        <option value="ALL">全学期</option>
+                        <option value="SPRING">春学期</option>
+                        <option value="AUTUMN">秋学期</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* 曜日 & 時限 */}
@@ -304,6 +347,18 @@ export const Syllabus: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* キーワード・自由ワード */}
+                  <div>
+                    <label className="block font-bold text-text-sub mb-1.5">キーワード検索</label>
+                    <input
+                      type="text"
+                      placeholder="講義概要・関連ワードなど..."
+                      className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
+                      value={keywords}
+                      onChange={(e) => setKeywords(e.target.value)}
+                    />
+                  </div>
+
                   {/* 詳細検索トグル */}
                   <div>
                     <button
@@ -312,9 +367,9 @@ export const Syllabus: React.FC = () => {
                       className="flex items-center gap-1 text-[10px] font-bold text-keio-navy hover:underline transition"
                     >
                       {showAdvanced ? (
-                        <>詳細検索条件を閉じる <ChevronUp className="h-3.5 w-3.5" /></>
+                        <>詳細条件を閉じる <ChevronUp className="h-3.5 w-3.5" /></>
                       ) : (
-                        <>詳細検索条件を表示 <ChevronDown className="h-3.5 w-3.5" /></>
+                        <>詳細条件（言語・形態・学修等）を表示 <ChevronDown className="h-3.5 w-3.5" /></>
                       )}
                     </button>
                   </div>
@@ -328,9 +383,9 @@ export const Syllabus: React.FC = () => {
                         transition={{ duration: 0.2 }}
                         className="space-y-4 overflow-hidden pt-2 border-t border-border-main/50"
                       >
-                        {/* 授業形態 */}
+                        {/* 授業実施形態 */}
                         <div>
-                          <label className="block font-bold text-text-sub mb-1.5">授業形態</label>
+                          <label className="block font-bold text-text-sub mb-1.5">授業実施形態</label>
                           <select
                             className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
                             value={deliveryMethod}
@@ -357,6 +412,18 @@ export const Syllabus: React.FC = () => {
                           </select>
                         </div>
 
+                        {/* 分野 */}
+                        <div>
+                          <label className="block font-bold text-text-sub mb-1.5">学術分野</label>
+                          <input
+                            type="text"
+                            placeholder="例: 自然科学, 人文社会科学"
+                            className="w-full px-3 py-2 bg-background border border-border-main rounded-lg text-text-main focus:outline-none focus:border-keio-navy"
+                            value={field}
+                            onChange={(e) => setField(e.target.value)}
+                          />
+                        </div>
+
                         {/* 能動的学習 */}
                         <div>
                           <label className="block font-bold text-text-sub mb-1.5">能動的学修形式</label>
@@ -379,7 +446,7 @@ export const Syllabus: React.FC = () => {
                     type="submit"
                     className="w-full py-2.5 px-4 bg-keio-navy hover:bg-keio-navy/95 text-white font-bold rounded-xl text-xs transition shadow-sm"
                   >
-                    条件で検索する
+                    この条件で検索する
                   </button>
                 </form>
               </motion.div>
@@ -387,7 +454,7 @@ export const Syllabus: React.FC = () => {
           )}
         </AnimatePresence>
 
-        {/* 右ペイン: 検索結果一覧 (フィルター非表示のときは全幅化) */}
+        {/* 検索結果 */}
         <div className="flex-grow space-y-4 w-full">
           <div className="flex justify-between items-center text-xs text-text-sub">
             <span>開講講義一覧: {lectures.length} 件</span>
@@ -406,7 +473,7 @@ export const Syllabus: React.FC = () => {
                 onClick={() => setShowFilters(true)}
                 className="text-keio-navy font-bold hover:underline"
               >
-                検索条件を変更して探す
+                検索条件を指定して探す
               </button>
             </div>
           ) : (
