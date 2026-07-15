@@ -1,0 +1,19 @@
+{
+  "name": "keionote-root",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build:frontend": "npm run build --prefix frontend",
+    "build:backend": "npx prisma generate && npm run build --prefix backend && npx prisma migrate deploy",
+    "build": "npm run build:frontend && npm run build:backend",
+    "start": "npm run start --prefix backend",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

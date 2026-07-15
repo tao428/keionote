@@ -1,0 +1,266 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ItemStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+  HIDDEN
+  DELETED
+}
+
+enum TransactionStatus {
+  REQUESTED
+  ACCEPTED
+  SCHEDULED
+  HANDED_OVER
+  REVIEW_PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  INQUIRY
+  MESSAGE
+  STATUS_CHANGE
+  SYSTEM
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  nickname       String
+  role           UserRole  @default(USER)
+  faculty        String
+  department     String
+  grade          Int
+  average_rating Float     @default(0.0)
+  review_count   Int       @default(0)
+  transaction_count Int    @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // リレーション
+  timetables     TimeTable[]
+  items          Item[]        @relation("SellerItems")
+  favorites      Favorite[]
+  notifications  Notification[]
+  reports        Report[]      @relation("Reporter")
+  reviewsSent    Review[]      @relation("Reviewer")
+  reviewsReceived Review[]     @relation("ReviewedUser")
+  
+  transactionsAsSeller Transaction[] @relation("SellerTransactions")
+  transactionsAsBuyer  Transaction[] @relation("BuyerTransactions")
+  messages             Message[]
+}
+
+model TimeTable {
+  id         String   @id @default(uuid())
+  userId     String
+  lectureId  String
+  weekday    String   // "MON", "TUE" 等
+  period     Int      // 1, 2, 3..
+  semester   String   // "SPRING", "AUTUMN"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // リレーション
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lecture    Lecture  @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lectureId])
+}
+
+model Lecture {
+  id         String   @id @default(uuid())
+  name       String
+  teacher    String
+  faculty    String
+  department String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // リレーション
+  timetables TimeTable[]
+  textbooks  Textbook[]
+}
+
+model Textbook {
+  id         String   @id @default(uuid())
+  lectureId  String
+  title      String
+  author     String?
+  publisher  String?
+  isbn       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // リレーション
+  lecture    Lecture  @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  items      Item[]
+}
+
+model Item {
+  id          String      @id @default(uuid())
+  sellerId    String
+  textbookId  String
+  title       String
+  description String
+  price       Int
+  condition   String      // "NEW", "LIKE_NEW", "GOOD", "USED" 等
+  status      ItemStatus  @default(AVAILABLE)
+  viewCount   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // リレーション
+  seller      User        @relation("SellerItems", fields: [sellerId], references: [id], onDelete: Cascade)
+  textbook    Textbook    @relation(fields: [textbookId], references: [id], onDelete: Cascade)
+  images      ItemImage[]
+  favorites   Favorite[]
+  transactions Transaction[]
+  reports     Report[]
+}
+
+model ItemImage {
+  id           String   @id @default(uuid())
+  itemId       String
+  imageUrl     String
+  displayOrder Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // リレーション
+  item         Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model PickupLocation {
+  id          String   @id @default(uuid())
+  campus      String   // "HIYOSHI", "MITA", "YAGAMI", "SFC" 等
+  name        String
+  description String?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // リレーション
+  transactions Transaction[]
+}
+
+model Transaction {
+  id               String            @id @default(uuid())
+  itemId           String
+  sellerId         String
+  buyerId          String
+  pickupLocationId String?
+  pickupTime       DateTime?
+  status           TransactionStatus @default(REQUESTED)
+  completedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // リレーション
+  item           Item            @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  seller         User            @relation("SellerTransactions", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyer          User            @relation("BuyerTransactions", fields: [buyerId], references: [id], onDelete: Cascade)
+  pickupLocation PickupLocation? @relation(fields: [pickupLocationId], references: [id], onDelete: SetNull)
+  chat           Chat?
+  reviews        Review[]
+}
+
+model Chat {
+  id            String   @id @default(uuid())
+  transactionId String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // リレーション
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  messages      Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id             String   @id @default(uuid())
+  transactionId  String
+  reviewerId     String
+  reviewedUserId String
+  rating         Int      // 1〜5
+  comment        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // リレーション
+  transaction    Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  reviewer       User        @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewedUser   User        @relation("ReviewedUser", fields: [reviewedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([transactionId, reviewerId])
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  itemId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  content   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // リレーション
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id           String   @id @default(uuid())
+  reporterId   String
+  targetItemId String
+  reason       String
+  status       String   // "PENDING", "RESOLVED" 等
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // リレーション
+  reporter     User     @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetItem   Item     @relation(fields: [targetItemId], references: [id], onDelete: Cascade)
+}
