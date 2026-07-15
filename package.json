@@ -10,7 +10,7 @@
     "build:frontend": "npm run build --prefix frontend",
     "build:backend": "npx prisma generate && npm run build --prefix backend && npx tsc prisma/seed.ts --module commonjs --target es2022 --outDir prisma/dist",
     "build": "npm run build:frontend && npm run build:backend",
-    "start": "npx prisma migrate deploy && npx prisma db seed && npm run start --prefix backend",
+    "start": "npx prisma db push --accept-data-loss && npx prisma db seed && npm run start --prefix backend",
     "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
   },
   "devDependencies": {
