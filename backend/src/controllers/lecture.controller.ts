@@ -4,7 +4,29 @@ import { LectureService } from '../services/lecture.service';
 export class LectureController {
   static async listLectures(req: Request, res: Response, next: NextFunction) {
     try {
-      const lectures = await LectureService.listLectures();
+      const {
+        year, semester, campus, faculty, department, grade,
+        weekday, period, name, teacher, keywords, language,
+        classStyle, deliveryMethod, activeLearning
+      } = req.query;
+
+      const lectures = await LectureService.listLectures({
+        year: year ? Number(year) : undefined,
+        semester: semester as string,
+        campus: campus as string,
+        faculty: faculty as string,
+        department: department as string,
+        grade: grade ? Number(grade) : undefined,
+        weekday: weekday as string,
+        period: period ? Number(period) : undefined,
+        name: name as string,
+        teacher: teacher as string,
+        keywords: keywords as string,
+        language: language as string,
+        classStyle: classStyle as string,
+        deliveryMethod: deliveryMethod as string,
+        activeLearning: activeLearning as string
+      });
       return res.status(200).json({ lectures });
     } catch (error) {
       next(error);

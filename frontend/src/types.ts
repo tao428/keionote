@@ -15,8 +15,20 @@ export interface Lecture {
   id: string;
   name: string;
   teacher: string;
+  year: number;
+  semester: string;
+  campus: string;
   faculty: string;
   department: string;
+  grade: number;
+  weekday: string;
+  period: number;
+  keywords?: string;
+  language: string;
+  classStyle: string;
+  field?: string;
+  activeLearning?: string;
+  deliveryMethod: string;
   textbooks?: Textbook[];
 }
 
@@ -27,7 +39,9 @@ export interface Textbook {
   author?: string;
   publisher?: string;
   isbn?: string;
+  edition?: string;
   lecture?: Lecture;
+  items?: Item[];
 }
 
 export interface ItemImage {
@@ -47,6 +61,7 @@ export interface Item {
   condition: 'NEW' | 'LIKE_NEW' | 'GOOD' | 'USED';
   status: 'AVAILABLE' | 'RESERVED' | 'SOLD' | 'HIDDEN' | 'DELETED';
   viewCount: number;
+  favoriteCount: number;
   createdAt: string;
   seller: {
     id: string;
@@ -62,9 +77,8 @@ export interface TimetableSlot {
   id: string;
   userId: string;
   lectureId: string;
-  weekday: string;
-  period: number;
-  semester: string;
+  createdAt: string;
+  updatedAt: string;
   lecture: Lecture;
 }
 

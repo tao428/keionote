@@ -69,9 +69,6 @@ model TimeTable {
   id         String   @id @default(uuid())
   userId     String
   lectureId  String
-  weekday    String   // "MON", "TUE" 等
-  period     Int      // 1, 2, 3..
-  semester   String   // "SPRING", "AUTUMN"
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -83,13 +80,25 @@ model TimeTable {
 }
 
 model Lecture {
-  id         String   @id @default(uuid())
-  name       String
-  teacher    String
-  faculty    String
-  department String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String   @id @default(uuid())
+  name           String
+  teacher        String
+  year           Int      @default(2026)
+  semester       String   // "SPRING" (春学期), "AUTUMN" (秋学期), "FULL_YEAR" (通年)
+  campus         String   // "HIYOSHI", "MITA", "YAGAMI", "SFC", "SHINANOMACHI", "SHIBA"
+  faculty        String   // 所属学部
+  department     String   // 学科
+  grade          Int      // 配当学年 (1〜6)
+  weekday        String   // "MON", "TUE", "WED", "THU", "FRI", "SAT"
+  period         Int      // 時限 (1〜7)
+  keywords       String?  // キーワード (シラバス連携)
+  language       String   @default("JAPANESE")    // "JAPANESE", "ENGLISH", "BILINGUAL"
+  classStyle     String   @default("LECTURE")     // "LECTURE", "SEMINAR", "LAB", "PBL"
+  field          String?  // 分野
+  activeLearning String?  // 能動的学修形式 (カンマ区切り)
+  deliveryMethod String   @default("FACE_TO_FACE") // "FACE_TO_FACE", "ONLINE_REALTIME", "ONLINE_ONDEMAND"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // リレーション
   timetables TimeTable[]
@@ -103,6 +112,7 @@ model Textbook {
   author     String?
   publisher  String?
   isbn       String?
+  edition    String?  // 版数
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -121,6 +131,7 @@ model Item {
   condition   String      // "NEW", "LIKE_NEW", "GOOD", "USED" 等
   status      ItemStatus  @default(AVAILABLE)
   viewCount   Int         @default(0)
+  favoriteCount Int       @default(0)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 

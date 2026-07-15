@@ -8,11 +8,66 @@ export interface TimetableInput {
 }
 
 export class LectureService {
-  // 全講義データの取得
-  static async listLectures() {
+  // 全講義データの取得 (シラバス詳細検索に対応)
+  static async listLectures(filters?: {
+    year?: number;
+    semester?: string;
+    campus?: string;
+    faculty?: string;
+    department?: string;
+    grade?: number;
+    weekday?: string;
+    period?: number;
+    name?: string;
+    teacher?: string;
+    keywords?: string;
+    language?: string;
+    classStyle?: string;
+    deliveryMethod?: string;
+    activeLearning?: string;
+  }) {
+    const where: any = {};
+
+    if (filters) {
+      if (filters.year) where.year = Number(filters.year);
+      if (filters.semester && filters.semester !== 'ALL') where.semester = filters.semester;
+      if (filters.campus && filters.campus !== 'ALL') where.campus = filters.campus;
+      if (filters.faculty && filters.faculty !== 'ALL') where.faculty = filters.faculty;
+      if (filters.department) where.department = { contains: filters.department, mode: 'insensitive' };
+      if (filters.grade) where.grade = Number(filters.grade);
+      if (filters.weekday) where.weekday = filters.weekday;
+      if (filters.period) where.period = Number(filters.period);
+      if (filters.name) where.name = { contains: filters.name, mode: 'insensitive' };
+      if (filters.teacher) where.teacher = { contains: filters.teacher, mode: 'insensitive' };
+      if (filters.language) where.language = filters.language;
+      if (filters.classStyle) where.classStyle = filters.classStyle;
+      if (filters.deliveryMethod) where.deliveryMethod = filters.deliveryMethod;
+      
+      if (filters.keywords) {
+        where.OR = [
+          { name: { contains: filters.keywords, mode: 'insensitive' } },
+          { teacher: { contains: filters.keywords, mode: 'insensitive' } },
+          { keywords: { contains: filters.keywords, mode: 'insensitive' } }
+        ];
+      }
+
+      if (filters.activeLearning) {
+        where.activeLearning = { contains: filters.activeLearning, mode: 'insensitive' };
+      }
+    }
+
     return prisma.lecture.findMany({
+      where,
       include: {
-        textbooks: true
+        textbooks: {
+          include: {
+            items: {
+              where: {
+                status: 'AVAILABLE'
+              }
+            }
+          }
+        }
       },
       orderBy: {
         name: 'asc'
@@ -29,31 +84,37 @@ export class LectureService {
       include: {
         lecture: {
           include: {
-            textbooks: true
+            textbooks: {
+              include: {
+                items: {
+                  where: {
+                    status: 'AVAILABLE'
+                  }
+                }
+              }
+            }
           }
         }
-      },
-      orderBy: [
-        { weekday: 'asc' },
-        { period: 'asc' }
-      ]
+      }
     });
   }
 
   // 講義を時間割に登録
   static async upsertTimetable(userId: string, input: TimetableInput) {
-    // 既に同じ曜日・時限・学期に登録されているコマがあるか確認
+    // すでにその時限に登録されているコマがあるか、紐づくLectureの曜日時限から判定
     const existing = await prisma.timeTable.findFirst({
       where: {
         userId,
-        weekday: input.weekday,
-        period: input.period,
-        semester: input.semester
+        lecture: {
+          weekday: input.weekday,
+          period: input.period,
+          semester: input.semester
+        }
       }
     });
 
     if (existing) {
-      // 既存のコマを上書き更新
+      // 既存の時限のコマを今回の新しい講義に更新
       return prisma.timeTable.update({
         where: { id: existing.id },
         data: {
@@ -69,10 +130,7 @@ export class LectureService {
     return prisma.timeTable.create({
       data: {
         userId,
-        lectureId: input.lectureId,
-        weekday: input.weekday,
-        period: input.period,
-        semester: input.semester
+        lectureId: input.lectureId
       },
       include: {
         lecture: true

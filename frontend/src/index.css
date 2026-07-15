@@ -1,57 +1,81 @@
 @import "tailwindcss";
 
-/* 高級感のあるダークテーマ / グラスモルフィズムデザインシステム */
-:root {
-  --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-  --accent-gradient: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  --glass-bg: rgba(255, 255, 255, 0.45);
-  --glass-border: rgba(255, 255, 255, 0.25);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+@theme {
+  --color-keio-navy: #001E62;
+  --color-keio-red: #C63527;
+  --color-keio-gold: #F1C400;
+  --color-background: #F8F9FC;
+  --color-surface: #FFFFFF;
+  --color-border-main: #E5E7EB;
+  --color-text-main: #111827;
+  --color-text-sub: #6B7280;
+
+  --font-sans: 'Inter', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
 }
 
-.dark {
-  --glass-bg: rgba(17, 24, 39, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
+/* 全体レイアウト＆スクロールデザイン */
 body {
   margin: 0;
-  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: radial-gradient(circle at top left, #1e293b, #0f172a, #020617);
-  color: #f8fafc;
+  background-color: var(--color-background);
+  color: var(--color-text-main);
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-y: scroll;
 }
 
-/* スムーズなスクロール挙動 */
-html {
-  scroll-behavior: smooth;
-}
-
-/* スクロールバーのカスタマイズ */
+/* スクロールバーの Notion 風カスタマイズ */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
-  border-radius: 3px;
+  background: rgba(107, 114, 128, 0.2);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+  background: rgba(107, 114, 128, 0.4);
 }
 
-/* グラスモルフィズムカード */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+/* 高級感のあるNotion/Stripeライクな枠線とドロップシャドウ */
+.card-premium {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-main);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 30, 98, 0.2);
+}
+
+/* グラスモルフィズムヘッダー */
+.glass-header {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+}
+
+/* 時間割 Apple Calendar スタイル */
+.timetable-cell-active {
+  background-color: rgba(0, 30, 98, 0.05);
+  border-left: 3px solid var(--color-keio-navy);
+  color: var(--color-keio-navy);
+}
+
+.timetable-cell-selected {
+  background-color: var(--color-keio-navy);
+  color: var(--color-surface);
+}
+
+/* Drawer アニメーション (Notion風右ドロワー) */
+.drawer-shadow {
+  box-shadow: -10px 0 30px -5px rgba(0, 0, 0, 0.08);
 }
 
 /* ダイアログ（Top Layer）アニメーション設定 */
@@ -62,16 +86,16 @@ dialog[open],
 
   @starting-style {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: scale(0.98) translateY(8px);
   }
 }
 
 dialog,
 [popover] {
   opacity: 0;
-  transform: scale(0.95) translateY(10px);
+  transform: scale(0.98) translateY(8px);
   transition-property: opacity, transform, display, overlay;
-  transition-duration: 0.3s;
+  transition-duration: 0.25s;
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   transition-behavior: allow-discrete;
 }
@@ -80,33 +104,18 @@ dialog::backdrop,
 [popover]::backdrop {
   background-color: rgba(0, 0, 0, 0);
   transition:
-    display 0.3s allow-discrete,
-    overlay 0.3s allow-discrete,
-    background-color 0.3s ease-out;
+    display 0.25s allow-discrete,
+    overlay 0.25s allow-discrete,
+    background-color 0.25s ease-out;
 }
 
 dialog[open]::backdrop,
 [popover]:popover-open::backdrop {
-  background-color: rgba(2, 6, 23, 0.7);
+  background-color: rgba(17, 24, 39, 0.4);
   backdrop-filter: blur(4px);
 
   @starting-style {
     background-color: rgba(0, 0, 0, 0);
     backdrop-filter: blur(0px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  dialog,
-  [popover] {
-    transform: none;
-    transition-duration: 0.1s;
-  }
-
-  @starting-style {
-    dialog[open],
-    [popover]:popover-open {
-      transform: none;
-    }
   }
 }
