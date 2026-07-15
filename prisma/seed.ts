@@ -72,7 +72,7 @@ async function main() {
     }
   }
 
-  console.log('Generating optimized demo data for Free plan...');
+  console.log('Generating optimized lightweight demo data for Free plan...');
 
   // 1. 固定ユーザー
   console.log('Creating demo and admin users...');
@@ -116,7 +116,7 @@ async function main() {
     dbLocations.push(dbLoc);
   }
 
-  // 3. ユーザーの生成 (計30名)
+  // 3. ユーザーの生成 (計15名)
   console.log('Generating students...');
   const firstNames = ['健太', '大輔', '翔', '拓也', '美咲', '葵', 'さくら', '優花', '陽菜', '結衣', '陸', '颯太', '春斗', '芽衣', '莉子'];
   const lastNames = ['佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤', '吉田', '山田'];
@@ -130,7 +130,7 @@ async function main() {
   ];
 
   const dbUsers = [demoUser, adminUser];
-  for (let i = 1; i <= 28; i++) {
+  for (let i = 1; i <= 13; i++) {
     const lastName = getRandomElement(lastNames);
     const firstName = getRandomElement(firstNames);
     const fac = getRandomElement(faculties);
@@ -145,14 +145,14 @@ async function main() {
         department: dept,
         grade: getRandomInt(1, 4),
         average_rating: parseFloat((4.2 + random() * 0.8).toFixed(1)),
-        review_count: getRandomInt(1, 5),
-        transaction_count: getRandomInt(2, 8)
+        review_count: getRandomInt(1, 3),
+        transaction_count: getRandomInt(1, 4)
       }
     });
     dbUsers.push(user);
   }
 
-  // 4. 講義データの生成 (計120件)
+  // 4. 講義データの生成 (計40件)
   console.log('Generating lectures...');
   const lecturePrefixes = [
     '微分積分学', '線形代数学', 'アルゴリズムとデータ構造', 'ミクロ経済学', 'マクロ経済学', 
@@ -164,7 +164,7 @@ async function main() {
   const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   
   const dbLectures = [];
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 40; i++) {
     const baseName = getRandomElement(lecturePrefixes) + ' ' + getRandomElement(lectureSuffixes);
     const fac = getRandomElement(faculties);
     const dept = getRandomElement(fac.depts);
@@ -194,7 +194,7 @@ async function main() {
     dbLectures.push(lecture);
   }
 
-  // 5. 教科書の生成 (計240冊)
+  // 5. 教科書の生成 (計80冊)
   console.log('Generating textbooks...');
   const publishers = ['裳華房', 'サイエンス社', '有斐閣', '日本評論社', '慶應義塾大学出版会', '岩波書店'];
   const authors = ['佐藤 健', '高橋 礼治', '田中 洋介', '渡辺 順二', '福澤 信吾'];
@@ -203,6 +203,7 @@ async function main() {
   for (const lec of dbLectures) {
     const bookCount = getRandomInt(1, 2);
     for (let b = 0; b < bookCount; b++) {
+      if (dbTextbooks.length >= 80) break;
       const title = `${lec.name.replace(/ Ⅰ| Ⅱ| 基礎| 演習| 概論| 中級/g, '')} 指定テキスト (${b + 1})`;
       const author = getRandomElement(authors);
       const publisher = getRandomElement(publishers);
@@ -220,9 +221,10 @@ async function main() {
       });
       dbTextbooks.push(textbook);
     }
+    if (dbTextbooks.length >= 80) break;
   }
 
-  // 6. 出品（Item）の生成 (計420件)
+  // 6. 出品（Item）の生成 (計120件)
   console.log('Generating items...');
   const conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'USED'];
   const dummyImages = [
@@ -233,7 +235,7 @@ async function main() {
   const prices = [300, 500, 800, 1000, 1200, 1500, 2000];
 
   const dbItems = [];
-  for (let i = 0; i < 420; i++) {
+  for (let i = 0; i < 120; i++) {
     const textbook = getRandomElement(dbTextbooks);
     const seller = getRandomElement(dbUsers);
     const cond = getRandomElement(conditions);
@@ -247,7 +249,7 @@ async function main() {
         description: `講義で使用しました。${cond === 'USED' ? '書き込みが少しありますが、読むのには全く問題ありません。' : '非常に綺麗な状態です。'}学内手渡し希望です。`,
         price,
         condition: cond,
-        status: i < 350 ? ItemStatus.AVAILABLE : i < 400 ? ItemStatus.SOLD : ItemStatus.RESERVED,
+        status: i < 95 ? ItemStatus.AVAILABLE : i < 110 ? ItemStatus.SOLD : ItemStatus.RESERVED,
         viewCount: getRandomInt(3, 100),
         favoriteCount: getRandomInt(0, 15)
       }
@@ -263,16 +265,16 @@ async function main() {
     dbItems.push(item);
   }
 
-  // 7. 取引 & チャット (計40件)
+  // 7. 取引 & チャット (計15件)
   console.log('Generating transactions and chats...');
-  const soldItems = dbItems.filter(item => item.status === ItemStatus.SOLD).slice(0, 40);
+  const soldItems = dbItems.filter(item => item.status === ItemStatus.SOLD).slice(0, 15);
   const dbTransactions = [];
 
   for (let t = 0; t < soldItems.length; t++) {
     const item = soldItems[t];
     const buyer = getRandomElement(dbUsers.filter(u => u.id !== item.sellerId));
     const loc = getRandomElement(dbLocations);
-    const isCompleted = t < 30;
+    const isCompleted = t < 10;
 
     const transaction = await prisma.transaction.create({
       data: {
@@ -302,11 +304,12 @@ async function main() {
     });
   }
 
-  // 8. レビュー (計60件)
+  // 8. レビュー (計20件)
   console.log('Generating reviews...');
   let revCount = 0;
   const completedTransactions = dbTransactions.filter(tx => tx.status === TransactionStatus.COMPLETED);
   for (const tx of completedTransactions) {
+    if (revCount >= 20) break;
     await prisma.review.create({
       data: {
         transactionId: tx.id,
