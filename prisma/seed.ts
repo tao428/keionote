@@ -29,32 +29,53 @@ function getRandomInt(min: number, max: number): number {
 async function main() {
   console.log('Checking database state...');
   
-  // 重複投入防止チェック
-  const lectureCount = await prisma.lecture.count();
-  if (lectureCount > 0) {
-    console.log('Seed data already exists. Skipping seed process.');
-    return;
+  try {
+    const lectureCount = await prisma.lecture.count();
+    if (lectureCount > 0) {
+      console.log('Seed data already exists. Skipping seed process.');
+      return;
+    }
+  } catch (err) {
+    console.error('Database connection failed or table does not exist yet:', err);
+    throw err;
   }
 
-  console.log('Clearing old data (if any)...');
-  await prisma.report.deleteMany({});
-  await prisma.notification.deleteMany({});
-  await prisma.favorite.deleteMany({});
-  await prisma.review.deleteMany({});
-  await prisma.message.deleteMany({});
-  await prisma.chat.deleteMany({});
-  await prisma.transaction.deleteMany({});
-  await prisma.itemImage.deleteMany({});
-  await prisma.item.deleteMany({});
-  await prisma.textbook.deleteMany({});
-  await prisma.timeTable.deleteMany({});
-  await prisma.lecture.deleteMany({});
-  await prisma.pickupLocation.deleteMany({});
-  await prisma.user.deleteMany({});
+  console.log('Clearing old data via TRUNCATE CASCADE...');
+  try {
+    // PostgreSQL用の高速・安全な一括削除
+    await prisma.$executeRawUnsafe(
+      `TRUNCATE TABLE "Report", "Notification", "Favorite", "Review", "Message", "Chat", "Transaction", "ItemImage", "Item", "Textbook", "TimeTable", "Lecture", "PickupLocation", "User" CASCADE;`
+    );
+    console.log('Database cleared.');
+  } catch (err) {
+    console.warn('TRUNCATE CASCADE failed, falling back to deleteMany...', err);
+    // フォールバック（SQLite等のローカルテスト用）
+    try {
+      await prisma.report.deleteMany({});
+      await prisma.notification.deleteMany({});
+      await prisma.favorite.deleteMany({});
+      await prisma.review.deleteMany({});
+      await prisma.message.deleteMany({});
+      await prisma.chat.deleteMany({});
+      await prisma.transaction.deleteMany({});
+      await prisma.itemImage.deleteMany({});
+      await prisma.item.deleteMany({});
+      await prisma.textbook.deleteMany({});
+      await prisma.timeTable.deleteMany({});
+      await prisma.lecture.deleteMany({});
+      await prisma.pickupLocation.deleteMany({});
+      await prisma.user.deleteMany({});
+      console.log('Database cleared via deleteMany.');
+    } catch (fallbackErr) {
+      console.error('Fatal: Failed to clear database:', fallbackErr);
+      throw fallbackErr;
+    }
+  }
 
   console.log('Generating optimized demo data for Free plan...');
 
   // 1. 固定ユーザー
+  console.log('Creating demo and admin users...');
   const demoUser = await prisma.user.create({
     data: {
       id: 'demo-user',
@@ -80,6 +101,7 @@ async function main() {
   });
 
   // 2. 受け渡し場所
+  console.log('Creating pickup locations...');
   const locationsData = [
     { campus: 'HIYOSHI', name: '銀杏並木入口', description: '並木前の大きな横断歩道付近' },
     { campus: 'HIYOSHI', name: 'グリーンハウス前', description: '食堂棟1階の自動ドア前' },
@@ -95,6 +117,7 @@ async function main() {
   }
 
   // 3. ユーザーの生成 (計30名)
+  console.log('Generating students...');
   const firstNames = ['健太', '大輔', '翔', '拓也', '美咲', '葵', 'さくら', '優花', '陽菜', '結衣', '陸', '颯太', '春斗', '芽衣', '莉子'];
   const lastNames = ['佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤', '吉田', '山田'];
   const faculties = [
@@ -128,9 +151,9 @@ async function main() {
     });
     dbUsers.push(user);
   }
-  console.log(`Created ${dbUsers.length} users.`);
 
   // 4. 講義データの生成 (計120件)
+  console.log('Generating lectures...');
   const lecturePrefixes = [
     '微分積分学', '線形代数学', 'アルゴリズムとデータ構造', 'ミクロ経済学', 'マクロ経済学', 
     '統計学概論', '憲法', '民法第一部', '経営学基礎', 'マーケティング論', '情報処理の基礎', 
@@ -170,9 +193,9 @@ async function main() {
     });
     dbLectures.push(lecture);
   }
-  console.log(`Created ${dbLectures.length} lectures.`);
 
-  // 5. 教科書の生成 (計240冊、1講義あたり平均2冊)
+  // 5. 教科書の生成 (計240冊)
+  console.log('Generating textbooks...');
   const publishers = ['裳華房', 'サイエンス社', '有斐閣', '日本評論社', '慶應義塾大学出版会', '岩波書店'];
   const authors = ['佐藤 健', '高橋 礼治', '田中 洋介', '渡辺 順二', '福澤 信吾'];
 
@@ -198,9 +221,9 @@ async function main() {
       dbTextbooks.push(textbook);
     }
   }
-  console.log(`Created ${dbTextbooks.length} textbooks.`);
 
   // 6. 出品（Item）の生成 (計420件)
+  console.log('Generating items...');
   const conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'USED'];
   const dummyImages = [
     'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400',
@@ -239,9 +262,9 @@ async function main() {
     });
     dbItems.push(item);
   }
-  console.log(`Created ${dbItems.length} items.`);
 
   // 7. 取引 & チャット (計40件)
+  console.log('Generating transactions and chats...');
   const soldItems = dbItems.filter(item => item.status === ItemStatus.SOLD).slice(0, 40);
   const dbTransactions = [];
 
@@ -278,9 +301,9 @@ async function main() {
       }
     });
   }
-  console.log(`Created ${dbTransactions.length} transactions.`);
 
   // 8. レビュー (計60件)
+  console.log('Generating reviews...');
   let revCount = 0;
   const completedTransactions = dbTransactions.filter(tx => tx.status === TransactionStatus.COMPLETED);
   for (const tx of completedTransactions) {
@@ -295,9 +318,9 @@ async function main() {
     });
     revCount++;
   }
-  console.log(`Created ${revCount} reviews.`);
 
   // デモ用の時間割登録
+  console.log('Generating demo timetable slots...');
   const demoUserLectures = dbLectures.filter(l => l.faculty === '理工学部' && l.grade === 3).slice(0, 4);
   for (const lec of demoUserLectures) {
     try {
@@ -311,14 +334,13 @@ async function main() {
       // ignore
     }
   }
-  console.log('Registered demo user timetable.');
 
   console.log('Seeding completed successfully!');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('Fatal seeding error:', e);
     process.exit(1);
   })
   .finally(async () => {
