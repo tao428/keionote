@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Home } from './pages/Home';
 import { Syllabus } from './pages/Syllabus';
@@ -45,7 +45,7 @@ const AnimatedRoutes: React.FC<{
           path="/"
           element={
             <ProtectedRoute>
-              <Home />
+              <Home currentUser={currentUser} />
             </ProtectedRoute>
           }
         />
@@ -155,6 +155,22 @@ export const App: React.FC = () => {
     setCurrentUser(updatedUser);
   };
 
+  // NavLink用のアクティブスタイルクラス
+  const navLinkClass = ({ isActive }: { isActive: boolean }) => 
+    `px-4 py-2 rounded-xl text-sm font-semibold tracking-wide transition-all relative ${
+      isActive 
+        ? 'text-keio-navy bg-keio-navy/5 font-bold' 
+        : 'text-text-sub hover:text-keio-navy hover:bg-keio-navy/5'
+    }`;
+
+  // プロフィール用のアクティブスタイルクラス
+  const profileLinkClass = ({ isActive }: { isActive: boolean }) => 
+    `flex items-center gap-2 pl-2.5 pr-3.5 py-1.5 rounded-xl border transition-colors shadow-sm ${
+      isActive 
+        ? 'border-keio-navy bg-keio-navy/5 text-keio-navy' 
+        : 'border-border-main bg-surface hover:bg-slate-50 text-text-main'
+    }`;
+
   if (authLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8F9FC]">
@@ -170,7 +186,7 @@ export const App: React.FC = () => {
         {/* 固定ナビゲーションヘッダー */}
         <header className="sticky top-0 z-50 w-full glass-header backdrop-blur-md">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            {/* 左: ロゴ */}
+            {/* 左: ロゴ (ホームへ戻る) */}
             <div className="flex items-center gap-6">
               <Link to="/" className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-keio-navy group">
                 <div className="p-1.5 bg-keio-navy text-white rounded-lg group-hover:scale-105 transition-transform duration-300">
@@ -179,33 +195,22 @@ export const App: React.FC = () => {
                 <span className="hidden sm:inline">KeioNote</span>
               </Link>
 
-              {/* 中央: メインメニュー */}
+              {/* 中央: メインメニュー (ホームを非表示にし、現在位置を視覚化) */}
               {currentUser && (
-                <nav className="hidden md:flex items-center gap-1">
-                  <Link
-                    to="/"
-                    className="px-3.5 py-2 rounded-xl text-text-sub hover:text-keio-navy hover:bg-keio-navy/5 transition-all text-sm font-medium"
-                  >
-                    ホーム
-                  </Link>
-                  <Link
-                    to="/syllabus"
-                    className="px-3.5 py-2 rounded-xl text-text-sub hover:text-keio-navy hover:bg-keio-navy/5 transition-all text-sm font-medium"
-                  >
+                <nav className="hidden md:flex items-center gap-1.5">
+                  <NavLink to="/syllabus" className={navLinkClass}>
                     シラバス検索
-                  </Link>
-                  <Link
-                    to="/timetable"
-                    className="px-3.5 py-2 rounded-xl text-text-sub hover:text-keio-navy hover:bg-keio-navy/5 transition-all text-sm font-medium"
-                  >
+                    {/* アクティブ時に下に小さなアクセントバーを描画 */}
+                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-keio-gold rounded transform scale-0 nav-active:scale-100 transition-transform duration-200"></span>
+                  </NavLink>
+                  <NavLink to="/timetable" className={navLinkClass}>
                     時間割
-                  </Link>
-                  <Link
-                    to="/items/new"
-                    className="px-3.5 py-2 rounded-xl text-text-sub hover:text-keio-navy hover:bg-keio-navy/5 transition-all text-sm font-medium"
-                  >
+                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-keio-gold rounded transform scale-0 nav-active:scale-100 transition-transform duration-200"></span>
+                  </NavLink>
+                  <NavLink to="/items/new" className={navLinkClass}>
                     出品する
-                  </Link>
+                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-keio-gold rounded transform scale-0 nav-active:scale-100 transition-transform duration-200"></span>
+                  </NavLink>
                 </nav>
               )}
             </div>
@@ -215,18 +220,15 @@ export const App: React.FC = () => {
               <div className="flex items-center gap-3">
                 {/* モバイル用ナビゲーションリンク */}
                 <div className="md:hidden flex items-center gap-0.5">
-                  <Link to="/" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
-                    <GraduationCap className="h-4.5 w-4.5" />
-                  </Link>
-                  <Link to="/syllabus" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
+                  <NavLink to="/syllabus" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
                     <BookOpen className="h-4.5 w-4.5" />
-                  </Link>
-                  <Link to="/timetable" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
+                  </NavLink>
+                  <NavLink to="/timetable" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
                     <Calendar className="h-4.5 w-4.5" />
-                  </Link>
-                  <Link to="/items/new" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
+                  </NavLink>
+                  <NavLink to="/items/new" className="p-2 text-text-sub hover:text-keio-navy rounded-xl">
                     <PlusCircle className="h-4.5 w-4.5" />
-                  </Link>
+                  </NavLink>
                 </div>
 
                 {/* 通知ベル (ダミー) */}
@@ -236,17 +238,17 @@ export const App: React.FC = () => {
                 </button>
 
                 {/* プロフィールアイコン */}
-                <Link
+                <NavLink
                   to="/mypage"
-                  className="flex items-center gap-2 pl-2.5 pr-3.5 py-1.5 rounded-xl border border-border-main bg-surface hover:bg-slate-50 transition-colors shadow-sm"
+                  className={profileLinkClass}
                 >
                   <div className="h-6 w-6 rounded-full bg-keio-navy text-white flex items-center justify-center text-xs font-semibold">
                     D
                   </div>
-                  <span className="text-xs font-semibold text-text-main hidden sm:inline">
+                  <span className="text-xs font-semibold hidden sm:inline">
                     {currentUser.nickname}
                   </span>
-                </Link>
+                </NavLink>
               </div>
             )}
           </div>
