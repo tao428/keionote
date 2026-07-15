@@ -15,6 +15,25 @@ export const App: React.FC = () => {
 
   // ログイン状態（セッション）のチェック
   const checkAuth = async () => {
+    const DEMO_MODE = true; // 将来OTPに戻す場合はここを false に設定します
+
+    if (DEMO_MODE) {
+      setCurrentUser({
+        id: 'demo-user',
+        email: 'demo@keio.jp',
+        nickname: 'Demo User',
+        role: 'USER',
+        faculty: '理工学部',
+        department: '情報工学科',
+        grade: 3,
+        average_rating: 4.8,
+        review_count: 5,
+        transaction_count: 3
+      });
+      setAuthLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/auth/me');
       if (res.ok) {

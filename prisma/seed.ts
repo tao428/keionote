@@ -8,6 +8,15 @@ async function main() {
   // 1. テストユーザーの作成
   const testUsers = [
     {
+      id: 'demo-user',
+      email: 'demo@keio.jp',
+      nickname: 'Demo User',
+      role: UserRole.USER,
+      faculty: '理工学部',
+      department: '情報工学科',
+      grade: 3,
+    },
+    {
       email: 'taro.keio@keio.jp',
       nickname: '慶應太郎',
       role: UserRole.USER,

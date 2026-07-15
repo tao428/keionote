@@ -143,13 +143,15 @@ export const MyPage: React.FC<MyPageProps> = ({ currentUser, onLogout, onProfile
               <Settings className="h-4 w-4" />
               プロフィール編集
             </button>
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/15 px-4 py-2.5 rounded-xl text-xs font-bold transition"
-            >
-              <LogOut className="h-4 w-4" />
-              ログアウト
-            </button>
+            {currentUser.id !== 'demo-user' && (
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/15 px-4 py-2.5 rounded-xl text-xs font-bold transition"
+              >
+                <LogOut className="h-4 w-4" />
+                ログアウト
+              </button>
+            )}
           </div>
         </div>
 
